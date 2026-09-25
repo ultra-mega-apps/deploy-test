@@ -1,0 +1,32 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      DEPLOY: ${{ vars.DEPLOY }}
+
+    steps:
+      - name: Download deploy client
+        run: |
+          curl --fail --silent --show-error --location \
+            https://raw.githubusercontent.com/ultra-mega-apps/public-bin/main/github-actions-deploy-me.sh \
+            --output /tmp/github-actions-deploy-me.sh
+
+          chmod +x /tmp/github-actions-deploy-me.sh
+
+      - name: Deploy
+        run: |
+          /tmp/github-actions-deploy-me.sh
