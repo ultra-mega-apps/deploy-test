@@ -1,65 +1,38 @@
-# deploy-test — OIDC deploy authorization demo
+# deploy-test — Hello World app + OIDC deploy consumer
 
-Demo server + serious auth library proving GitHub Actions OIDC deploys.
-The server authorizes; it never performs a real deploy.
+This repo simulates an ordinary application. It is a Node.js app that
+answers `Hello World` and knows nothing about OIDC, JWT or JWKS internals.
 
-## Install / test / run
+## Run
 
 ```sh
-npm install
-npm test          # unit + end-to-end (runs the real .sh as a subprocess)
-PORT=3000 LOG_FILE=./deploy.log npm start
+npm start
 ```
 
-`npm test` needs `bash`, `curl` and `python3` (for the `.sh` e2e path);
-the parser-only suite in `public-bin` is dependency-free bash.
+Listens on `0.0.0.0`, port `process.env.PORT || 3000`.
+`GET /` responds `200 text/plain` with body `Hello World`.
 
-## How OIDC validation works (`lib/auth.js`, dependency: `jose`)
+## Local test
 
-1. OIDC discovery at `<issuer>/.well-known/openid-configuration`, JWKS
-   fetched from `jwks_uri` (`https://token.actions.githubusercontent.com`
-   in production).
-2. `jwtVerify` checks signature, `iss`, `aud`
-   (`https://deploy.umapps.net`), `exp` and `nbf`.
-3. Claims checked: `repository_owner === ultra-mega-apps`,
-   environment re-derived from the authenticated `ref`
-   (`refs/heads/main` → STAGING, `refs/tags/*` → PRODUCTION),
-   `sha` claim required (GitHub advertises it) and compared.
-4. Every body field (`repository`, `repositoryOwner`, `ref`, `sha`,
-   `environment`) is compared against the token; any mismatch → DENY.
-   Extra `params` are ignored metadata.
-
-## DEPLOY organization variable
-
-```
-STAGING|https://deploy.storage.umapps.net
+```sh
+npm test
 ```
 
-Future example with production:
+Starts the app, checks `curl http://127.0.0.1:3000/` returns HTTP 200
+with `Hello World`, then stops it.
 
-```
-STAGING|https://ofrg1.umapps.net:50000|PRODUCTION|https://oagp1.umapps.net:50000
-```
+## Deploy
 
-Create it at org **Settings → Secrets and variables → Actions →
-Variables**, name `DEPLOY`, repository access including this repo.
+- Push to `main` requests a deploy to **STAGING**.
+- Push a tag (`refs/tags/*`) requests a deploy to **PRODUCTION**.
+- The workflow (`.github/workflows/deploy.yml`, `id-token: write`) downloads
+  the deploy client from its authoritative source on every run:
 
-## Log
+  `https://raw.githubusercontent.com/ultra-mega-apps/public-bin/main/github-actions-deploy-me.sh`
 
-`LOG_FILE` (default `./deploy.log`):
+- Authentication uses GitHub Actions OIDC: the client sends its OIDC token
+  to the deploy-server, which answers `ALLOW`/`DENY`. No shared passwords,
+  no deploy secrets in this repo.
 
-```
-2026-... ALLOW repository=ultra-mega-apps/deploy-test environment=STAGING ref=refs/heads/main sha=...
-2026-... DENY reason="invalid audience"
-```
-
-Tokens are never logged or stored.
-
-## Real endpoint of this PoC
-
-CapRover app `deploy` → `https://deploy.storage.umapps.net`
-(valid Let's Encrypt cert, port 443), proxying to this server's
-`POST /deploy`. The canonical deploy source for current and future
-servers lives in `ultra-mega-apps/deploy-server`
-(`Dockerfile` + `captain-definition`); this repo keeps its own copy as
-the tested reference implementation.
+Server implementation, auth library and OIDC tests live in
+`ultra-mega-apps/deploy-server`. This repo is only a consumer.

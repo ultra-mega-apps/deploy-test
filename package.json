@@ -1,16 +1,14 @@
 {
   "name": "deploy-test",
   "version": "1.0.0",
-  "description": "GitHub Actions OIDC deploy authorization demo (server + auth library)",
+  "private": true,
+  "description": "Minimal Hello World application used as an OIDC deploy consumer",
   "type": "module",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "start": "node server.js",
-    "test": "node --test test/auth.test.js test/e2e.test.js"
-  },
-  "dependencies": {
-    "jose": "^6.0.0"
+    "test": "./test/smoke.sh"
   }
 }
