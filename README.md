@@ -59,4 +59,7 @@ Tokens are never logged or stored.
 
 CapRover app `deploy` → `https://deploy.storage.umapps.net`
 (valid Let's Encrypt cert, port 443), proxying to this server's
-`POST /deploy`. See `Dockerfile` + `captain-definition`.
+`POST /deploy`. The canonical deploy source for current and future
+servers lives in `ultra-mega-apps/deploy-server`
+(`Dockerfile` + `captain-definition`); this repo keeps its own copy as
+the tested reference implementation.
